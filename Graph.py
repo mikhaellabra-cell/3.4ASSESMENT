@@ -1,10 +1,12 @@
-"""
-Assessment 3.4: Non-linear Data Structure - Graph (LABRA)
+r"""
+Assessment 3.4: Non-linear Data Structure - Graph
 Name: Mikhael S. Labra | BSIT-2A | CC204 Data Structure and Algorithm
 
-Graph built from the last name L-A-B-R-A:
+The user types a name. Each letter becomes a vertex, placed level by level,
+left to right. Each vertex is connected by an edge to its parent above it.
+Example for LABRA:
 
-  Vertices: L, A1, B, R, A2     (A1 and A2 are both the letter A)
+  Vertices: L, A1, B, R, A2
   Edges:    L-A1, L-B, A1-R, A1-A2
 
             L
@@ -12,6 +14,9 @@ Graph built from the last name L-A-B-R-A:
         A1     B
        /  \
       R    A2
+
+If a letter repeats (like the two A's), the trace shows it as A1, A2, ...
+so the vertices can be told apart. The final answer shows letters only.
 """
 from collections import deque
 
@@ -41,7 +46,7 @@ class Graph:
                 if w not in visited:
                     visited.add(w)                   # mark when enqueued
                     queue.append(w)
-            print(f"  Step {step}: visit {v:<2} | queue = [{', '.join(queue)}]")
+            print(f"  Step {step}: visit {v:<3} | queue = [{', '.join(queue)}]")
             step += 1
         return order
 
@@ -59,34 +64,49 @@ class Graph:
             for w in reversed(self.adj[v]):          # reversed so the first
                 if w not in visited:                 # neighbor is popped first
                     stack.append(w)
-            print(f"  Step {step}: visit {v:<2} | stack (top on right) = "
+            print(f"  Step {step}: visit {v:<3} | stack (top on right) = "
                   f"[{', '.join(stack)}]")
             step += 1
         return order
 
 
-def build_graph():
+def build_graph(text):
+    """One vertex per letter (level by level); each vertex joins its parent."""
+    counts = {}
+    for ch in text:
+        counts[ch] = counts.get(ch, 0) + 1
+
+    seen = {}
+    names = []
     g = Graph()
-    for name, letter in [("L", "L"), ("A1", "A"), ("B", "B"),
-                         ("R", "R"), ("A2", "A")]:
-        g.add_vertex(name, letter)
-    g.add_edge("L", "A1")
-    g.add_edge("L", "B")
-    g.add_edge("A1", "R")
-    g.add_edge("A1", "A2")
-    return g
+    for ch in text:
+        seen[ch] = seen.get(ch, 0) + 1
+        name = f"{ch}{seen[ch]}" if counts[ch] > 1 else ch
+        names.append(name)
+        g.add_vertex(name, ch)
+
+    for i in range(1, len(names)):
+        g.add_edge(names[(i - 1) // 2], names[i])    # parent - child
+    return g, names
 
 
 if __name__ == "__main__":
-    g = build_graph()
+    text = input("Enter a name (letters only, e.g. LABRA): ")
+    text = "".join(ch for ch in text.upper() if ch.isalpha())   # remove spaces, symbols
 
-    print("GRAPH - LABRA")
-    print("\nAdjacency list")
-    for v, neighbors in g.adj.items():
-        print(f"  {v:<2} -> {', '.join(neighbors)}")
+    if not text:
+        print("No letters were entered.")
+    else:
+        g, names = build_graph(text)
+        start = names[0]
 
-    print("\nBFS (Breadth-First Search) starting at L")
-    print("BFS:", " - ".join(g.bfs("L")))
+        print("\nGRAPH -", text)
+        print("\nAdjacency list")
+        for v, neighbors in g.adj.items():
+            print(f"  {v:<3} -> {', '.join(neighbors) if neighbors else '(none)'}")
 
-    print("\nDFS (Depth-First Search) starting at L")
-    print("DFS:", " - ".join(g.dfs("L")))
+        print(f"\nBFS (Breadth-First Search) starting at {start}")
+        print("BFS:", " - ".join(g.bfs(start)))
+
+        print(f"\nDFS (Depth-First Search) starting at {start}")
+        print("DFS:", " - ".join(g.dfs(start)))

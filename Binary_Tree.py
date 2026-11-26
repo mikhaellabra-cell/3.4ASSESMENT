@@ -1,8 +1,9 @@
-"""
-Assessment 3.4: Non-linear Data Structure - Binary Tree (LABRA)
+r"""
+Assessment 3.4: Non-linear Data Structure - Binary Tree
 Name: Mikhael S. Labra | BSIT-2A | CC204 Data Structure and Algorithm
 
-Tree built from the last name L-A-B-R-A:
+The user types a name. The letters are placed in the tree level by level,
+left to right. Example for LABRA:
 
             L
           /   \
@@ -10,26 +11,40 @@ Tree built from the last name L-A-B-R-A:
        /  \
       R    A2
 
-(A1 and A2 are both the letter A; the numbers only tell the two nodes apart.)
+If a letter repeats (like the two A's), the trace shows it as A1, A2, ...
+so the nodes can be told apart. The final answer shows letters only.
 """
 from collections import deque
 
 
 class Node:
-    def __init__(self, letter, name=None):
-        self.letter = letter          # the letter shown in the diagram
-        self.name = name or letter    # unique name used in the trace (A1, A2)
+    def __init__(self, letter, name):
+        self.letter = letter    # the letter shown in the diagram
+        self.name = name        # unique name used in the trace (A1, A2, ...)
         self.left = None
         self.right = None
 
 
-def build_tree():
-    root = Node("L")
-    root.left = Node("A", "A1")
-    root.right = Node("B")
-    root.left.left = Node("R")
-    root.left.right = Node("A", "A2")
-    return root
+def build_tree(text):
+    """Place the letters level by level, left to right."""
+    counts = {}
+    for ch in text:
+        counts[ch] = counts.get(ch, 0) + 1
+
+    seen = {}
+    nodes = []
+    for ch in text:
+        seen[ch] = seen.get(ch, 0) + 1
+        name = f"{ch}{seen[ch]}" if counts[ch] > 1 else ch
+        nodes.append(Node(ch, name))
+
+    for i, node in enumerate(nodes):
+        left, right = 2 * i + 1, 2 * i + 2
+        if left < len(nodes):
+            node.left = nodes[left]
+        if right < len(nodes):
+            node.right = nodes[right]
+    return nodes[0] if nodes else None
 
 
 def bfs(root):
@@ -46,7 +61,7 @@ def bfs(root):
             queue.append(node.left)                  # enqueue left child
         if node.right:
             queue.append(node.right)                 # enqueue right child
-        print(f"  Step {step}: visit {node.name:<2} | queue = "
+        print(f"  Step {step}: visit {node.name:<3} | queue = "
               f"[{', '.join(n.name for n in queue)}]")
         step += 1
     return order
@@ -66,20 +81,26 @@ def dfs(root):
             stack.append(node.right)                 # push right first ...
         if node.left:
             stack.append(node.left)                  # ... so left is popped first
-        print(f"  Step {step}: visit {node.name:<2} | stack (top on right) = "
+        print(f"  Step {step}: visit {node.name:<3} | stack (top on right) = "
               f"[{', '.join(n.name for n in stack)}]")
         step += 1
     return order
 
 
 if __name__ == "__main__":
-    root = build_tree()
+    text = input("Enter a name (letters only, e.g. LABRA): ")
+    text = "".join(ch for ch in text.upper() if ch.isalpha())   # remove spaces, symbols
 
-    print("BINARY TREE - LABRA")
-    print("\nBFS (Breadth-First Search)")
-    bfs_order = bfs(root)
-    print("BFS:", " - ".join(bfs_order))
+    if not text:
+        print("No letters were entered.")
+    else:
+        root = build_tree(text)
 
-    print("\nDFS (Depth-First Search)")
-    dfs_order = dfs(root)
-    print("DFS:", " - ".join(dfs_order))
+        print("\nBINARY TREE -", text)
+        print("\nBFS (Breadth-First Search)")
+        bfs_order = bfs(root)
+        print("BFS:", " - ".join(bfs_order))
+
+        print("\nDFS (Depth-First Search)")
+        dfs_order = dfs(root)
+        print("DFS:", " - ".join(dfs_order))
